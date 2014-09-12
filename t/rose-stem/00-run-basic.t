@@ -29,20 +29,20 @@ fi
 #Create repository to run on
 REPO=$PWD/rose-test-battery-stemtest-repo
 mkdir -p $REPO
-svnadmin create $REPO/foo
-URL=file://$REPO/foo
+svnadmin create $REPO/foo.xm
+URL=file://$REPO/foo.xm
 BASEINSTALL=$(mktemp -d --tmpdir=$PWD)
 (cd $BASEINSTALL; mkdir -p trunk/rose-stem; svn import -q -m ""  $URL)
 #Keywords for the foo repository
 mkdir -p conf
-echo "location{primary}[foo]=$URL" >conf/keyword.cfg
+echo "location{primary}[foo.xm]=$URL" >conf/keyword.cfg
 export FCM_CONF_PATH=$PWD/conf
 cd $TEST_DIR
 #-------------------------------------------------------------------------------
 #Check out a copy of the repository
 WORKINGCOPY=$(mktemp -d --tmpdir=$PWD)
 SUITENAME=$(basename $WORKINGCOPY)
-fcm checkout -q fcm:foo_tr $WORKINGCOPY
+fcm checkout -q fcm:foo.xm_tr $WORKINGCOPY
 #-------------------------------------------------------------------------------
 #Copy suite into working copy
 cp $TEST_SOURCE_DIR/00-run-basic/suite.rc $WORKINGCOPY/rose-stem
@@ -65,11 +65,11 @@ TEST_KEY=$TEST_KEY_BASE-basic-groups-to-run
 file_grep $TEST_KEY "RUN_NAMES=\[earl_grey, milk, sugar, spoon, cup, milk\]" \
           $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-basic-source
-file_grep $TEST_KEY "SOURCE_FOO=$WORKINGCOPY fcm:foo_tr@head" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM=$WORKINGCOPY fcm:foo_tr@head" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-basic-source-base
-file_grep $TEST_KEY "SOURCE_FOO_BASE=$WORKINGCOPY\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_BASE=$WORKINGCOPY\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-basic-source-rev
-file_grep $TEST_KEY "SOURCE_FOO_REV=\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_REV=\$" $OUTPUT
 #-------------------------------------------------------------------------------
 # Second test, using suite redirection
 TEST_KEY=$TEST_KEY_BASE-suite-redirection
@@ -81,11 +81,11 @@ OUTPUT=$HOME/cylc-run/$SUITENAME/log/job/1/my_task_1/01/job.out
 TEST_KEY=$TEST_KEY_BASE-suite-redirection-groups-to-run
 file_grep $TEST_KEY "RUN_NAMES=\[lapsang\]" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-suite-redirection-source
-file_grep $TEST_KEY "SOURCE_FOO=fcm:foo_tr@head\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM=fcm:foo_tr@head\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-suite-redirection-source-base
-file_grep $TEST_KEY "SOURCE_FOO_BASE=fcm:foo_tr\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_BASE=fcm:foo_tr\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-suite-redirection-source-rev
-file_grep $TEST_KEY "SOURCE_FOO_REV=@1\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_REV=@1\$" $OUTPUT
 #-------------------------------------------------------------------------------
 # Third test, checking subdirectory is working
 TEST_KEY=$TEST_KEY_BASE-subdirectory
@@ -97,11 +97,11 @@ OUTPUT=$HOME/cylc-run/$SUITENAME/log/job/1/my_task_1/01/job.out
 TEST_KEY=$TEST_KEY_BASE-subdirectory-groups-to-run
 file_grep $TEST_KEY "RUN_NAMES=\[assam\]" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-subdirectory-source
-file_grep $TEST_KEY "SOURCE_FOO=$WORKINGCOPY" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM=$WORKINGCOPY" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-subdirectory-source-base
-file_grep $TEST_KEY "SOURCE_FOO_BASE=$WORKINGCOPY\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_BASE=$WORKINGCOPY\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-subdirectory-source-rev
-file_grep $TEST_KEY "SOURCE_FOO_REV=\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_REV=\$" $OUTPUT
 #-------------------------------------------------------------------------------
 # Fourth test, checking relative path with -C is working
 TEST_KEY=$TEST_KEY_BASE-relative-path
@@ -114,11 +114,11 @@ OUTPUT=$HOME/cylc-run/$SUITENAME/log/job/1/my_task_1/01/job.out
 TEST_KEY=$TEST_KEY_BASE-relative-path-groups-to-run
 file_grep $TEST_KEY "RUN_NAMES=\[ceylon\]" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-relative-path-source
-file_grep $TEST_KEY "SOURCE_FOO=$WORKINGCOPY" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM=$WORKINGCOPY" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-relative-path-source-base
-file_grep $TEST_KEY "SOURCE_FOO_BASE=$WORKINGCOPY\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_BASE=$WORKINGCOPY\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-relative-path-source-rev
-file_grep $TEST_KEY "SOURCE_FOO_REV=\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_REV=\$" $OUTPUT
 #-------------------------------------------------------------------------------
 cd $TEST_DIR
 #-------------------------------------------------------------------------------
@@ -141,11 +141,11 @@ TEST_KEY=$TEST_KEY_BASE-check-with-config-groups-to-run
 file_grep $TEST_KEY "RUN_NAMES=\[earl_grey, milk, sugar, spoon, cup, milk\]" \
           $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-check-with-config-source
-file_grep $TEST_KEY "SOURCE_FOO=$WORKINGCOPY fcm:foo_tr@head" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM=$WORKINGCOPY fcm:foo_tr@head" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-check-with-config-source-base
-file_grep $TEST_KEY "SOURCE_FOO_BASE=$WORKINGCOPY\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_BASE=$WORKINGCOPY\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-check-with-config-source-rev
-file_grep $TEST_KEY "SOURCE_FOO_REV=\$" $OUTPUT
+file_grep $TEST_KEY "SOURCE_FOO.XM_REV=\$" $OUTPUT
 TEST_KEY=$TEST_KEY_BASE-check-with-config-single-auto-option
 file_grep $TEST_KEY "MILK=true\$" $OUTPUT
 #-------------------------------------------------------------------------------
