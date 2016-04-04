@@ -423,6 +423,27 @@ automatic-options=GRAVITY=newtonian PLANET=jupiter
         file as Jinja2 variables. </p>
       </div>
 
+      <div class="slide">
+        <h2 id="loop">Looping over platforms in optional configurations</h2>
+
+        <p>It is possible to automatically loop over a set of optional suite
+        configuration files. This is useful, for example, if you wish to set
+        up platform-specific information in optional configuration files and 
+        wish to allow users to run rose-stem in a single command.</p>
+        
+        <p>To activate this feature, you must set 
+        <pre>
+ROSE_STEM_LOOP_OVER_OPT_CONFS=true
+</pre>
+        in your <code>rose-suite.conf</code> file. The command will then loop
+        over each optional configuration file in the <code>opt</code> 
+        subdirectory which matches the expression 
+        <samp>rose-suite-[site]-*.conf</samp> where <samp>site</samp> should be
+        replaced with the value of the <code>SITE</code> variable.</p>
+
+      </div>
+
+
     </div>
   </div>
 </body>

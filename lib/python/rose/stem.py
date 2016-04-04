@@ -127,6 +127,20 @@ class RoseSuiteConfNotFoundException(Exception):
     __str__ = __repr__
 
 
+class SiteNotSetForLoopingException(Exception):
+
+    """Exception class when unable to find rose-suite.conf."""
+
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "The SITE variable is not set, and is required when looping " + \
+            "over optional configurations is active."
+
+    __str__ = __repr__
+
+
 class SourceTreeAddedAsBranchEvent(Event):
 
     """Event to report a source tree has been added as a branch."""
@@ -159,6 +173,18 @@ class SuiteSelectionEvent(Event):
 
     def __repr__(self):
         return "Will run suite from %s" % (self.args[0])
+
+    __str__ = __repr__
+
+
+class OptConfigSelectionEvent(Event):
+
+    """Event to report an optional config has been loaded."""
+
+    LEVEL = Event.DEFAULT
+
+    def __repr__(self):
+        return "Running suite with optional configuration %s" % (self.args[0])
 
     __str__ = __repr__
 
@@ -355,6 +381,46 @@ class StemRunner(object):
         if not suite_rose_stem_version == ROSE_STEM_VERSION:
             raise RoseStemVersionException(suite_rose_stem_version)
 
+    def _should_loop_over_opt_confs(self, fname):
+        """Check whether the suite expects to loop over optional configs."""
+        if not os.path.isfile(fname):
+            raise RoseSuiteConfNotFoundException(os.path.dirname(fname))
+        config = rose.config.load(fname)
+        loop_over_confs = config.get(['ROSE_STEM_LOOP_OVER_OPT_CONFS'])
+        if loop_over_confs is None:
+            loop_over_confs = False
+        return loop_over_confs
+
+    def _list_of_opt_confs(self, suitedir):
+        """Return a list of optional configuration files to loop over."""
+        import glob
+
+        # Get the current SITE variable
+        site = None
+        for item in self.opts.defines:
+            if 'SITE' in item:
+                result = re.search(r'SITE=(\S+)', item)
+                if result:
+                    site = result.group(1)
+
+        if site is None:
+            raise SiteNotSetForLoopingException()
+
+        # Find optional configurations
+        opt_conf_files = glob.glob(os.path.join(suitedir, 'opt',
+                                   'rose-suite-' + site.replace('"', '')
+                                                 + '*.conf'))
+
+        # Reformat filenames into opt config names
+        opt_confs = []
+        for item in opt_conf_files:
+            name = os.path.basename(item)
+            name = re.sub(r'\.conf$', r'', name)
+            name = re.sub(r'^rose-suite-', r'', name)
+            opt_confs.append(name)
+
+        return opt_confs
+
     def process(self):
         """Process STEM options into 'rose suite-run' options."""
 
@@ -442,20 +508,53 @@ def main():
             stem.reporter(e)
             sys.exit(1)
 
-    # Get the suiterunner object and execute
-    runner = SuiteRunner(event_handler=stem.reporter,
-                         popen=stem.popen,
-                         fs_util=stem.fs_util)
-    if opts.debug_mode:
-        sys.exit(runner(opts, args))
-    try:
-        sys.exit(runner(opts, args))
-    except Exception as e:
-        runner.handle_event(e)
-        if isinstance(e, RosePopenError):
-            sys.exit(e.rc)
-        else:
-            sys.exit(1)
+    # Detect if we have a looping rose-stem suite over multiple platforms
+    if stem._should_loop_over_opt_confs(os.path.join(os.getcwd(),
+                                        'rose-suite.conf')):
+        initial_opt_confs = opts.opt_conf_keys
+        initial_name = opts.name
+        for opt_conf in stem._list_of_opt_confs(os.getcwd()):
+            stem.reporter(OptConfigSelectionEvent(opt_conf))
+            if initial_opt_confs:
+                opts.opt_conf_keys = initial_opt_confs
+                opts.opt_conf_keys.append(opt_conf)
+            else:
+                opts.opt_conf_keys = [opt_conf]
+
+            # Add suffix to suite name
+            opts.name = initial_name + '_' + opt_conf
+            stem.reporter(NameSetEvent(opts.name))
+
+            # Run suite
+            runner = SuiteRunner(event_handler=stem.reporter,
+                                 popen=stem.popen,
+                                 fs_util=stem.fs_util)
+            if opts.debug_mode:
+                runner(opts, args)
+            try:
+                runner(opts, args)
+            except Exception as e:
+                runner.handle_event(e)
+                if isinstance(e, RosePopenError):
+                    sys.exit(e.rc)
+                else:
+                    sys.exit(1)
+
+    else:
+        # Get the suiterunner object and execute
+        runner = SuiteRunner(event_handler=stem.reporter,
+                             popen=stem.popen,
+                             fs_util=stem.fs_util)
+        if opts.debug_mode:
+            sys.exit(runner(opts, args))
+        try:
+            sys.exit(runner(opts, args))
+        except Exception as e:
+            runner.handle_event(e)
+            if isinstance(e, RosePopenError):
+                sys.exit(e.rc)
+            else:
+                sys.exit(1)
 
 
 if __name__ == "__main__":
