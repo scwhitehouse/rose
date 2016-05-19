@@ -25,6 +25,7 @@ import sys
 
 import rose.config
 from rose.fs_util import FileSystemUtil
+from rose.host_select import HostSelector
 from rose.opt_parse import RoseOptionParser
 from rose.popen import RosePopener, RosePopenError
 from rose.reporter import Reporter, Event
@@ -306,7 +307,30 @@ class StemRunner(object):
 
         # Remove anything after a point
         project = re.sub(r'\..*', r'', project)
-        return project, item, base, revision, mirror
+
+        # This should return working copies in the format ABC123:/path/to/wc
+        # whilst retaining source trees which are repository locations
+        # (which will contain fcm:, svn:, etc) or are working copies which
+        # have manually included the host.
+        # Firstly, if item does not contain a colon, use the current host to
+        # set hostitem to include it. If it does already, hostitem is simply
+        # item. This is used purely to populate the SOURCE_FOO variable.
+        if ':' not in item:
+            hostitem = self._get_local_host() + ':' + item
+        else:
+            hostitem = item
+
+        # If a colon isn't in base, prepend it, to populate the SOURCE_FOO_BASE
+        # variable.
+        if ':' not in base:
+            base = self._get_local_host() + ':' + base
+
+        return project, item, base, revision, mirror, hostitem
+
+    def _get_local_host(self):
+        """Return the host where the rose stem command was invoked."""
+        host_selector = HostSelector(self.event_handler, self.popen)
+        return host_selector.get_local_host()
 
     def _generate_name(self):
         """Generate a suite name from the name of the first source tree."""
@@ -369,13 +393,14 @@ class StemRunner(object):
         self.opts.project = list()
 
         for i, url in enumerate(self.opts.source):
-            project, url, base, rev, mirror = self._ascertain_project(url)
+            project, url, base, rev, mirror, hosturl = self._ascertain_project(
+                url)
             self.opts.source[i] = url
             self.opts.project.append(project)
             if project in repos:
-                repos[project].append(url)
+                repos[project].append(hosturl)
             else:
-                repos[project] = [url]
+                repos[project] = [hosturl]
                 self._add_define_option('SOURCE_' + project.upper() + '_REV',
                                         '"' + rev + '"')
                 self._add_define_option('SOURCE_' + project.upper() + '_BASE',
