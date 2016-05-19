@@ -315,10 +315,18 @@ class StemRunner(object):
         # Firstly, if item does not contain a colon, use the current host to
         # set hostitem to include it. If it does already, hostitem is simply
         # item. This is used purely to populate the SOURCE_FOO variable.
-        if ':' not in item:
-            hostitem = self._get_local_host() + ':' + item
-        else:
+        # If it does contain a colon, strip out the hostname from item.
+        if ':' in item:
             hostitem = item
+            # Ignore repository URLs
+            if 'fcm:' in item or 'svn:' in item or 'svn+ssh:' in item \
+                    'https:' in item or 'http:' in item:
+                pass
+            # Remove hostname
+            else:
+                item = re.sub(r'\S+:', r'', item)
+        else:
+            hostitem = self._get_local_host() + ':' + item
 
         # If a colon isn't in base, prepend it, to populate the SOURCE_FOO_BASE
         # variable.
